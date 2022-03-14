@@ -17,7 +17,7 @@ Siempre en el mismo directorio del archivo *docker-compose.yml*
 
 ### 2. Correr la línea de comandos dentro del contenedor
 
-**$** `docker exec -i -t modulo_3 bash`
+**$** `docker exec -i -t modulo_4a bash`
 
 Nos va a devolver a nuestra consola, una consola dentro del contenedor de software.
 

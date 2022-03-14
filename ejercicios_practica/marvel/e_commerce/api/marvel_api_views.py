@@ -4,9 +4,12 @@ from e_commerce.models import *
 from marvel.settings import VERDE, CIAN, AMARILLO
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+#from rest_framework.decorators import api_view,  permission_classes
 import requests
 import json
 import hashlib
+
+from django.shortcuts import render
 
 # NOTE: Declaramos las variables que tienen que ver con la API KEY de Marvel:
 
@@ -18,6 +21,13 @@ HASHED = hashlib.md5(TO_HASH.encode())
 URL_BASE = 'http://gateway.marvel.com/v1/public/'
 ENDPOINT = 'comics'
 PARAMS = dict(ts=TS, apikey=PUBLIC_KEY, hash=HASHED.hexdigest())
+
+# NOTE: Ejemplo de hello world con método GET
+@csrf_exempt
+def hello_world(request):
+    return render(request,'hello-world.html', {
+        'message': 'Mensage desde vista 2'
+    })
 
 
 @csrf_exempt
@@ -34,6 +44,7 @@ def get_comics(request):
     description = []
     prices = []
     thumbnail = []
+    products = {}
     limit = 0
     offset = 0
     # NOTE: Para obtener los valores de request, dependemos del tipo de petición, así:
@@ -67,68 +78,48 @@ def get_comics(request):
     # Obtenemos la lista de comics:
     comics_list = comics.get('data').get('results')
 
+
+
     # Filtramos la lista de comics y nos quedamos con lo que nos interesa:
+    
     for comic in comics_list:
+        prods = {}
         id.append(comic.get('id'))
         description.append(comic.get('description'))
         title.append(comic.get('title'))
         prices.append(comic.get('prices')[0].get('price'))
         thumbnail.append(
             f"{comic.get('thumbnail').get('path')}/standard_xlarge.jpg")
-
-    # NOTE: Construimos la tabla, concatenando en un string el código HTML:
-
-    template = '''<div>
-    <div style="height:90%; width:90%; overflow:auto;background:gray;">
-        <table>'''
-
-    for i in range(len(id)):
-        if description[i] == None:
-            desc = "<h3>Description Not Available<h3>"
-        else:
-            desc = description[i]
-
-        if prices[i] == 0.00:
-            # Con este condicional inhabilitamos la compra de los comics sin precio.
-            price = "<h3>N/A<h3>"
-            visibility = "hidden"
-        else:
-            price = prices[i]
-            visibility = "visible"
-
-        template += f'''
-        <tr>
-        <td>
-            <img src="{thumbnail[i]}">
-        </td>
-        <td>    
-            <h2>{title[i]}</h2><br><br>
-            {desc}
-        </td>
-        <td><h2>U$S{price}</h2></td>
-        <td>
-            <form action="/e-commerce/purchased_item/" method="post" , style ="visibility: {visibility};">
-                <label for="qty"><h3>Enter Quantity:</h3></label>
-                <input type="number" id="qty" name="qty" min="0" max="15">
-                <input type="submit" value="Buy" >
-                <input type="text" name="id" value="{id[i]}" style="visibility: hidden">
-                <input type="text" name="title" value="{title[i]}" style="visibility: hidden">
-                <input type="text" name="thumbnail" value="{thumbnail[i]}" style="visibility: hidden">
-                <input type="text" name="description" value="{description[i]}" style="visibility: hidden">
-                <input type="text" name="prices" value="{prices[i]}" style="visibility: hidden">
-            </form>
-        </td>
-        </tr>
+        prods = {'id': comic.get('id'), 
+             'description': comic.get('description'),
+             'title': comic.get('title'), 
+             'prices': comic.get('prices')[0].get('price'),
+             'thumbnail':f"{comic.get('thumbnail').get('path')}/standard_xlarge.jpg"
+        }
+        products.update(prods)
+             
         
-        '''
-    template += f'</table></div></div>'
-    # Imprimimos por consola el HTML construido (se puede probar en https://codepen.io/):
-    print(template)
-    # O lo podemos guardar en un HTML, como el nombre no cambia, el archivo se pisa en cada petición:
-    f = open('get_comics.html','w')
-    f.write(template)
-    f.close
-    return HttpResponse(template)
+    # NOTE: Invoca template get-comics
+    return render(request,'get-comics.html', {
+        'products': [
+            {'id':id[0], 'description': description[0], 'title': title[0], 'prices':prices[0],'thumbnail':thumbnail[0]},
+            {'id':id[1], 'description': description[1], 'title': title[1], 'prices':prices[1],'thumbnail':thumbnail[1]}, 
+            {'id':id[2], 'description': description[2], 'title': title[2], 'prices':prices[2],'thumbnail':thumbnail[2]},
+            {'id':id[3], 'description': description[3], 'title': title[3], 'prices':prices[3],'thumbnail':thumbnail[3]},
+            {'id':id[4], 'description': description[4], 'title': title[4], 'prices':prices[4],'thumbnail':thumbnail[4]},
+            {'id':id[5], 'description': description[5], 'title': title[5], 'prices':prices[5],'thumbnail':thumbnail[5]},
+            {'id':id[6], 'description': description[6], 'title': title[6], 'prices':prices[6],'thumbnail':thumbnail[6]},
+            {'id':id[7], 'description': description[7], 'title': title[7], 'prices':prices[7],'thumbnail':thumbnail[7]},
+            {'id':id[8], 'description': description[8], 'title': title[8], 'prices':prices[8],'thumbnail':thumbnail[8]},
+            {'id':id[9], 'description': description[9], 'title': title[9], 'prices':prices[9],'thumbnail':thumbnail[9]},
+            {'id':id[10], 'description': description[10], 'title': title[10], 'prices':prices[10],'thumbnail':thumbnail[10]},
+            {'id':id[11], 'description': description[11], 'title': title[11], 'prices':prices[11],'thumbnail':thumbnail[11]},
+            {'id':id[12], 'description': description[12], 'title': title[12], 'prices':prices[12],'thumbnail':thumbnail[12]},
+            {'id':id[13], 'description': description[13], 'title': title[13], 'prices':prices[13],'thumbnail':thumbnail[13]},
+            {'id':id[14], 'description': description[14], 'title': title[14], 'prices':prices[14],'thumbnail':thumbnail[14]},
+        ] 
+        }
+    )
 
 @csrf_exempt
 def purchased_item(request):
@@ -167,30 +158,16 @@ def purchased_item(request):
         total = float(price) * int(qty)
     except:
         total = ". . ."
-    # Creamos en una tabla la respuesta del comic comprado,
-    # con precio unitario y precio total:
-    template = f'''
-    <h1>
-    Your purchased product:
-    </h1>
-    <table>
-    <tr>
-        <td>
-        <img src="{thumbnail}">
-        </td>
-        <td>
-            <ul>
-                <li><h2>{title}</h2></li>
-                <li>ID: {id}</li>
-                <li>Description: {description}</li>
-                <li>Price (each): U$S{price}</li>
-                <li>Qty.: {qty}</li>
-                <li><h3>Total: U$S {total:.2f}</h3></li>
-            </ul>
-        </td>
-    <tr>
-    </table>
-    '''
-    # Imprimimos por consola el HTML construido (se puede probar en https://codepen.io/):
-    print(VERDE+template)
-    return HttpResponse(template)
+    
+    # NOTE: invoca a template purchased_item
+    return render(request,'purchased_item.html', {
+        'id': id,
+        'title': title,
+        'description': description,
+        'thumbnail': thumbnail,
+        'price': price,
+        'qty': qty,
+        'total': total,
+
+    })
+
